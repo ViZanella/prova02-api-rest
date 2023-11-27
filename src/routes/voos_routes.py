@@ -1,14 +1,11 @@
 from datetime import datetime, timedelta
-
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel import select
-
 from src.config.database import get_session
 from src.models.voos_model import Voo
 
 voos_router = APIRouter(prefix="/voos")
-
 
 @voos_router.post("")
 def cria_voo(voo: Voo):
@@ -17,13 +14,11 @@ def cria_voo(voo: Voo):
         hora_atual = datetime.now()
         hora_limite = hora_atual + timedelta(hours=LIMITE_HORAS)
         no_horario_limite = voo.data_saida <= hora_limite
-        print("horario_limite", no_horario_limite, hora_limite)
+
         if no_horario_limite:
-            return JSONResponse(
-                content={
-                    "message": f"Impossível incluir vôos com menos de {LIMITE_HORAS} horas antes da saída"
-                },
+            raise HTTPException(
                 status_code=403,
+                detail=f"Impossível incluir vôos com menos de {LIMITE_HORAS} horas antes da saída"
             )
 
         session.add(voo)
@@ -40,12 +35,26 @@ def lista_voos_venda():
         voo = session.exec(statement).all()
         return voo
 
+@voos_router.get("/{voo_id}/poltronas")
+def lista_poltronas(voo_id: int):
+    with get_session() as session:
+        voo = session.get(Voo, voo_id)
+        if not voo:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Voo com ID {voo_id} não encontrado."
+            )
+
+        poltronas = {
+            "poltrona_1": voo.poltrona_1,
+            "poltrona_2": voo.poltrona_2,
+        }
+
+        return poltronas
 
 @voos_router.get("")
 def lista_voos():
     with get_session() as session:
         statement = select(Voo)
-        voo = session.exec(statement).all()
-        return voo
-
-# TODO - Implementar rota que retorne as poltronas por id do voo
+        voos = session.exec(statement).all()
+        return voos

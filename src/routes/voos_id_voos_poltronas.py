@@ -14,7 +14,7 @@ def lista_poltronas(voo_id: int):
         if not voo:
             raise HTTPException(
                 status_code=404,
-                detail=f"Voo com ID {voo_id} não encontrado."
+                detail=f"Voo{voo_id} não localizado."
             )
 
         statement = select(Reserva).where(Reserva.voo_id == voo_id)

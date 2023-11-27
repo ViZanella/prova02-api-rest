@@ -6,7 +6,7 @@ from src.models.voos_model import Voo
 
 reservas_router = APIRouter(prefix="/reservas")
 
-@reservas_router.patch("/{id_reserva}/checkin/{num_poltrona}")
+@reservas_router.patch("/{codigo_reserva}/checkin/{num_poltrona}")
 def faz_checkin(id_reserva: int, num_poltrona: int):
     with get_session() as session:
         reserva = session.get(Reserva, id_reserva)

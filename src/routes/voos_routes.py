@@ -18,7 +18,7 @@ def cria_voo(voo: Voo):
         if no_horario_limite:
             raise HTTPException(
                 status_code=403,
-                detail=f"Impossível incluir vôos com menos de {LIMITE_HORAS} horas antes da saída"
+                detail=f"Nao permitida a inclusao de voos {LIMITE_HORAS} horas antes de este sair"
             )
 
         session.add(voo)
@@ -42,7 +42,7 @@ def lista_poltronas(voo_id: int):
         if not voo:
             raise HTTPException(
                 status_code=404,
-                detail=f"Voo com ID {voo_id} não encontrado."
+                detail=f"Voo {voo_id} não localizado."
             )
 
         poltronas = {

@@ -41,3 +41,66 @@ def cria_reserva(reserva: Reserva):
         
 
         return JSONResponse(content=reserva.dict(), status_code=201) 
+    
+@reservas_router.post("/{codigo_reserva}/checkin/{num_poltrona}")
+def faz_checkin(codigo_reserva: str, num_poltrona: int):
+    with get_session() as session:
+       
+        reserva = session.exec(select(Reserva).where(Reserva.codigo_reserva == codigo_reserva)).first()
+
+        if not reserva:
+            raise HTTPException(
+                status_code=404,
+                detail="Sua reserva não foi encontrada"
+            )
+
+        voo = session.get(Voo, reserva.voo_id)
+
+        if not voo:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Voo {reserva.voo_id} não localizado."
+            )
+            
+        poltrona_field = f"poltrona_{num_poltrona}"
+        if getattr(voo, poltrona_field) is not None:
+            raise HTTPException(
+                status_code=403,
+                detail="Esta poltrona está ocupada"
+            )
+
+        setattr(voo, poltrona_field, codigo_reserva)
+        session.commit()
+
+        return {"message": f"Seu check-in foi realizado com sucesso na poltrona {num_poltrona}."}
+
+@reservas_router.patch("/{codigo_reserva}/checkin/{num_poltrona}")
+def faz_checkin(id_reserva: int, num_poltrona: int):
+    with get_session() as session:
+        reserva = session.get(Reserva, id_reserva)
+
+        if not reserva:
+            raise HTTPException(
+                status_code=404,
+                detail="Sua reserva não foi encontrada"
+            )
+
+        voo = session.get(Voo, reserva.voo_id)
+
+        if not voo:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Voo {reserva.voo_id} não localizado."
+            )
+
+        poltrona_field = f"poltrona_{num_poltrona}"
+        if getattr(voo, poltrona_field) is not None:
+            raise HTTPException(
+                status_code=403,
+                detail="Esta poltrona está ocupada"
+            )
+
+        setattr(voo, poltrona_field, reserva.codigo_reserva)
+        session.commit()
+
+        return {"message": f"Seu check-in foi realizado com sucesso na poltrona {num_poltrona}."}

@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel import select
 from src.config.database import get_session
 from src.models.voos_model import Voo
+from src.models.reservas_model import Reserva
 
 voos_router = APIRouter(prefix="/voos")
 
@@ -28,7 +29,7 @@ def cria_voo(voo: Voo):
 
 @voos_router.get("/vendas")
 def lista_voos_venda():
-    LIMITE_HORAS = 3
+    LIMITE_HORAS = 2
     with get_session() as session:
         hora_limite = datetime.now() + timedelta(hours=LIMITE_HORAS)
         statement = select(Voo).where(Voo.data_saida >= hora_limite)
@@ -42,19 +43,26 @@ def lista_poltronas(voo_id: int):
         if not voo:
             raise HTTPException(
                 status_code=404,
-                detail=f"Voo {voo_id} não localizado."
+                detail=f"Voo{voo_id} não localizado."
             )
 
-        poltronas = {
-            "poltrona_1": voo.poltrona_1,
-            "poltrona_2": voo.poltrona_2,
-        }
+        statement = select(Reserva).where(Reserva.voo_id == voo_id)
+        reservas = session.exec(statement).all()
 
-        return poltronas
+        poltronas_status = {}
 
-@voos_router.get("")
-def lista_voos():
-    with get_session() as session:
-        statement = select(Voo)
-        voos = session.exec(statement).all()
-        return voos
+        for i in range(1, 10):  
+            poltrona_field = f"poltrona_{i}"
+            poltrona_value = getattr(voo, poltrona_field)
+
+            if poltrona_value is None:
+    
+                poltronas_status[poltrona_field] = {"status": "livre"}
+            else:
+            
+                poltronas_status[poltrona_field] = {"status": "ocupada", "numero_reserva": poltrona_value}
+
+        return poltronas_status
+
+
+

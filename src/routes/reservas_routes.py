@@ -18,9 +18,8 @@ def cria_reserva(reserva: Reserva):
         if existing_reservation:
             raise HTTPException(
                 status_code=400,
-                detail="O docuemnto informado já possui reserva vinculada ao mesmo."
+                detail="localizada uma reserva para o mesmo documento."
             )
-
 
         voo = session.exec(select(Voo).where(Voo.id == reserva.voo_id)).first()
 
@@ -39,8 +38,7 @@ def cria_reserva(reserva: Reserva):
         session.commit()
         session.refresh(reserva)
         
-
-        return JSONResponse(content=reserva.dict(), status_code=201) 
+        return JSONResponse(content=reserva.dict(), status_code=201)
     
 @reservas_router.post("/{codigo_reserva}/checkin/{num_poltrona}")
 def faz_checkin(codigo_reserva: str, num_poltrona: int):
@@ -51,7 +49,7 @@ def faz_checkin(codigo_reserva: str, num_poltrona: int):
         if not reserva:
             raise HTTPException(
                 status_code=404,
-                detail="Sua reserva não foi encontrada"
+                detail="Reserva não localizada"
             )
 
         voo = session.get(Voo, reserva.voo_id)
